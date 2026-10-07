@@ -21,7 +21,7 @@ public class Plugin : BasePlugin
     // GUIDs are permanent: other plugins reference them.
     public const string PluginGuid = "BOMBANANA.EndlessEasy";
     public const string PluginName = "Endless Easy";
-    public const string PluginVersion = "1.6.0";
+    public const string PluginVersion = "1.7.0";
 
     // BasePlugin already exposes an instance "Log" property; the template deliberately
     // shadows it with a static so helper classes can log without holding the Plugin instance.
@@ -95,10 +95,11 @@ public class Plugin : BasePlugin
             "Modules", "EnabledModules", "",
             "Comma-separated list of the ONLY modules endless waves may use, for example 'Cable' " +
             "or 'Cable, Calculator'. Every other module the game picks for a wave is replaced " +
-            "with one from this list. Leave EMPTY for the game's normal module pool (the default). " +
-            "Each name is checked against the module registry at startup; unknown names are " +
-            "reported and ignored, so a typo cannot break a wave. Module names look like " +
-            "'Cable', 'Calculator', 'Direction'.");
+            "with one from this list. Leave EMPTY for the game's normal module pool (the " +
+            "default). Each name is checked against the module registry at startup and unknown " +
+            "names are reported and ignored, so a typo cannot break a wave. " +
+            "BOMBANANA ships these modules: Cable, Calculator, Direction, ColorSlider, Symbol, " +
+            "Piano, Switch, MonkeySays, Morse, Soundboard, Maze, Pressure, Slider, Alarm.");
 
         // Two patches, both installed by reflection so nothing here needs the game's interop
         // assemblies at compile time. Harmony is also kept for our own [HarmonyPatch] types.

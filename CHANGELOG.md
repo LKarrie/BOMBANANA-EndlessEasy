@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.0
+
+The available module names are now listed in the config description and the README, so a whitelist
+can be written without guessing. The list is read from the game's own `ModuleRegistry` asset, and the
+mod no longer takes it on faith: at startup it asks the registry about every name and logs how many
+resolve, so a name that no longer exists is reported instead of failing silently later.
+
+Chaos modules named explicitly in the whitelist are now accepted (the log says which they are)
+rather than being refused without explanation.
+
 ## 1.6.0
 
 Replaced `ForceCableOnly` / `CableModuleName` with a general `[Modules] EnabledModules` whitelist of

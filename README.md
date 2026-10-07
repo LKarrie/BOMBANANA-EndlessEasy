@@ -121,6 +121,26 @@ EnabledModules = Cable, Calculator, Direction
 Leave it **empty** for the game's normal pool — that is the default, so nothing changes unless you
 opt in.
 
+### Module names this game ships
+
+| | | | |
+| --- | --- | --- | --- |
+| `Cable` | `Calculator` | `Direction` | `ColorSlider` |
+| `Symbol` | `Piano` | `Switch` | `MonkeySays` |
+| `Morse` | `Soundboard` | `Maze` | `Pressure` |
+| `Slider` | `Alarm` | | |
+
+Fourteen in total. This list comes from the game's own `ModuleRegistry` asset, and the mod does not
+take it on faith: at startup it asks the registry about every one of them and logs the result, so a
+name that no longer exists is reported rather than failing silently later.
+
+```
+ModuleWhitelist: 14/14 known module names resolve in this build: Cable, Calculator, ...
+```
+
+So "only wires and keypads" is `EnabledModules = Cable, Calculator`, and "everything except Morse"
+is `DisableMorse = true` (see the next section) rather than listing the other thirteen.
+
 BOMBANANA has no "allowed modules" setting anywhere — `EndlessModeConfig`'s complete member list is
 only the timer, strikes, cover animation, the three time bonuses, the wave tiers and two
 avoid-repeat booleans. So this works at the pick point instead. The endless wave builder selects
@@ -140,10 +160,11 @@ the same time, because a wave built from a short list needs the same name more t
 A **whitelist** rather than a blacklist is deliberate: replacing a pick requires a pool of names to
 replace it *with*, and the whitelist is exactly that pool.
 
-Every name you write is checked against the module registry's own lookup (`ModuleRegistry.Get`,
-plus `IsChaosModule`) before anything is rewritten. Unknown names are reported and dropped; if
-nothing survives validation, **no rewriting happens at all**. A typo therefore cannot turn a wave
-into modules the game cannot spawn. Module names look like `Cable`, `Calculator`, `Direction`.
+Every name you write is checked against the module registry's own lookup (`ModuleRegistry.Get`)
+before anything is rewritten. Unknown names are reported and dropped; if nothing survives
+validation, **no rewriting happens at all**. A typo therefore cannot turn a wave into modules the
+game cannot spawn. Modules the game classifies as chaos are accepted if you name them, but the log
+tells you which ones they are.
 
 Verified in a live three-player run, with the registry doing the confirming rather than a guess:
 
@@ -196,6 +217,10 @@ Two things worth knowing, both established by decompiling the game:
 
 ## Changelog
 
+* **1.7.0** — The available module names are now listed in the config and the README (taken from the
+  game's own `ModuleRegistry` asset), and the mod verifies them against the registry at startup
+  instead of assuming they still exist. Chaos modules are accepted when named explicitly rather than
+  being silently refused.
 * **1.6.0** — Replaced `ForceCableOnly` / `CableModuleName` with a general `[Modules] EnabledModules`
   whitelist, empty by default. Every name is validated against `ModuleRegistry.Get` before use, and
   invalid names are reported and ignored instead of being assumed correct.

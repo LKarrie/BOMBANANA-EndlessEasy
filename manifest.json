@@ -1,6 +1,6 @@
 {
     "name": "EndlessEasy",
-    "version_number": "1.6.0",
+    "version_number": "1.7.0",
     "website_url": "https://github.com/LKarrie/BOMBANANA-EndlessEasy",
     "description": "Makes BOMBANANA! endless mode more forgiving: bomb timer multiplier, extra tolerated mistakes, and an optional whitelist of allowed modules.",
     "dependencies": [

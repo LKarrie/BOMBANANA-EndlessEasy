@@ -31,7 +31,6 @@ namespace BombananaEndlessEasy;
 /// Every configured name is verified against the registry's own lookup before use:
 ///
 ///   static ModuleRegistry.Module ModuleRegistry.Get(string name)
-///   static bool ModuleRegistry.IsChaosModule(string name)
 ///
 /// Unknown names are reported and dropped, so a typo cannot turn a wave into names the game
 /// cannot spawn. If nothing survives validation, no rewriting happens at all.
@@ -43,6 +42,19 @@ internal static class ModuleWhitelist
     private static readonly string[] MissionDataTypeNames = { "EndlessMissionData", "BombGame.EndlessMissionData" };
     private static readonly string[] RegistryTypeNames = { "ModuleRegistry", "BombGame.ModuleRegistry" };
     private static readonly string[] PickMethodNames = { "TryPickPuzzleModule", "TryPickAllowedPuzzleModule" };
+
+    /// <summary>
+    /// The module names this build of BOMBANANA ships, read out of the game's own
+    /// ModuleRegistry asset (BOMBANANA_Data/resources.assets). Used only to REPORT which names
+    /// exist, never to pick one silently: every entry below is validated against
+    /// ModuleRegistry.Get before it is mentioned, so a wrong or removed name shows up as
+    /// "not found in this build" rather than being taken on faith.
+    /// </summary>
+    private static readonly string[] KnownModuleNames =
+    {
+        "Cable", "Calculator", "Direction", "ColorSlider", "Symbol", "Piano", "Switch",
+        "MonkeySays", "Morse", "Soundboard", "Maze", "Pressure", "Slider", "Alarm",
+    };
 
     private static readonly List<string> Allowed = new List<string>();
     private static readonly Random Rng = new Random();
@@ -60,7 +72,7 @@ internal static class ModuleWhitelist
         {
             Plugin.Log.LogInfo(
                 "ModuleWhitelist: EnabledModules is empty; endless waves use the game's normal " +
-                "module pool.");
+                "module pool. Available names: " + string.Join(", ", KnownModuleNames) + ".");
             return;
         }
 
@@ -199,14 +211,18 @@ internal static class ModuleWhitelist
             return true;   // definitive: stop retrying, Allowed stays empty
         }
 
+        LogAvailableModules(get, registryType);
+
         var valid = new List<string>();
         var invalid = new List<string>();
+        var chaos = new List<string>();
 
         foreach (string raw in Plugin.EnabledModules.Value.Split(new[] { ',', ';', ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries))
         {
-            if (TryResolveName(get, registryType, raw, out string actual))
+            if (TryResolveName(get, registryType, raw, out string actual, out bool isChaos))
             {
                 if (!ContainsIgnoreCase(valid, actual)) valid.Add(actual);
+                if (isChaos && !ContainsIgnoreCase(chaos, actual)) chaos.Add(actual);
             }
             else
             {
@@ -218,8 +234,7 @@ internal static class ModuleWhitelist
         {
             Plugin.Log.LogWarning(
                 "ModuleWhitelist: these names are not in the module registry and were ignored: " +
-                string.Join(", ", invalid) + ". Check the spelling; module names look like " +
-                "'Cable', 'Calculator', 'Direction'.");
+                string.Join(", ", invalid) + ". Valid names are: " + string.Join(", ", KnownModuleNames) + ".");
         }
 
         if (valid.Count == 0)
@@ -230,15 +245,52 @@ internal static class ModuleWhitelist
             return true;
         }
 
+        if (chaos.Count > 0)
+        {
+            // Reported, not refused: the user asked for these by name, so honour it.
+            Plugin.Log.LogInfo(
+                "ModuleWhitelist: the game classifies these as chaos modules, they are still used " +
+                "because you listed them: " + string.Join(", ", chaos));
+        }
+
         Allowed.Clear();
         Allowed.AddRange(valid);
         return true;
     }
 
-    /// <summary>True when the registry returns a real, non-chaos module for this name.</summary>
-    private static bool TryResolveName(MethodInfo get, Type registryType, string name, out string actualName)
+    /// <summary>
+    /// Reports which of the module names known to ship with BOMBANANA actually resolve in this
+    /// build, by asking the registry rather than trusting the list. A name the game no longer
+    /// has shows up as "not found" instead of silently failing later.
+    /// </summary>
+    private static void LogAvailableModules(MethodInfo get, Type registryType)
+    {
+        var present = new List<string>();
+        var missing = new List<string>();
+
+        foreach (string name in KnownModuleNames)
+        {
+            if (TryResolveName(get, registryType, name, out string actual, out _)) present.Add(actual);
+            else missing.Add(name);
+        }
+
+        Plugin.Log.LogInfo(
+            $"ModuleWhitelist: {present.Count}/{KnownModuleNames.Length} known module names resolve " +
+            "in this build: " + string.Join(", ", present));
+
+        if (missing.Count > 0)
+        {
+            Plugin.Log.LogWarning(
+                "ModuleWhitelist: listed in the mod but NOT present in this build: " +
+                string.Join(", ", missing));
+        }
+    }
+
+    /// <summary>True when the registry returns a real module for this name.</summary>
+    private static bool TryResolveName(MethodInfo get, Type registryType, string name, out string actualName, out bool isChaos)
     {
         actualName = null;
+        isChaos = false;
 
         try
         {
@@ -248,13 +300,8 @@ internal static class ModuleWhitelist
             string resolved = module.GetType().GetProperty("Name")?.GetValue(module) as string;
             if (string.IsNullOrEmpty(resolved)) return false;
 
-            if (IsChaos(registryType, resolved))
-            {
-                Plugin.Log.LogWarning($"ModuleWhitelist: '{resolved}' is a chaos module; ignoring it.");
-                return false;
-            }
-
             actualName = resolved;
+            isChaos = IsChaos(registryType, resolved);
             return true;
         }
         catch
@@ -291,7 +338,7 @@ internal static class ModuleWhitelist
     }
 
     /// <summary>
-    /// A wave made of a few whitelisted types needs the repeat guard off, otherwise the second
+    /// A wave built from a short whitelist needs the repeat guard off, otherwise the second
     /// pick of the same name is refused and the wave comes out short.
     /// </summary>
     private static void ApplyRepeatToggles()
