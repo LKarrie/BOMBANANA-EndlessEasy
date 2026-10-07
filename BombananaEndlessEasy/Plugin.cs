@@ -21,7 +21,7 @@ public class Plugin : BasePlugin
     // GUIDs are permanent: other plugins reference them.
     public const string PluginGuid = "BOMBANANA.EndlessEasy";
     public const string PluginName = "Endless Easy";
-    public const string PluginVersion = "1.5.0";
+    public const string PluginVersion = "1.6.0";
 
     // BasePlugin already exposes an instance "Log" property; the template deliberately
     // shadows it with a static so helper classes can log without holding the Plugin instance.
@@ -35,8 +35,7 @@ public class Plugin : BasePlugin
     internal static ConfigEntry<int> HealthBonus;
     internal static ConfigEntry<bool> VerboseLogging;
     internal static ConfigEntry<bool> DisableMorse;
-    internal static ConfigEntry<bool> ForceCableOnly;
-    internal static ConfigEntry<string> CableModuleName;
+    internal static ConfigEntry<string> EnabledModules;
 
     public override void Load()
     {
@@ -92,18 +91,14 @@ public class Plugin : BasePlugin
             "selector flag, so no module data is edited. Applies wherever the game offers the " +
             "module, not only in endless mode.");
 
-        ForceCableOnly = Config.Bind(
-            "Modules", "ForceCableOnly", false,
-            "Make endless waves use ONE module type (the wire/cable module). The mod rewrites the " +
-            "module name the wave builder picks, and clears the avoid-repeat guards so the same " +
-            "module can fill a whole wave. Nothing is rewritten if the cable module's name cannot " +
-            "be resolved, so a bad guess cannot break a run.");
-
-        CableModuleName = Config.Bind(
-            "Modules", "CableModuleName", "",
-            "Module name to use for ForceCableOnly. Leave empty to detect it automatically from " +
-            "the module registry (any name containing 'cable'). The log lists every registry " +
-            "module name, so you can pin the exact one here if auto-detection fails.");
+        EnabledModules = Config.Bind(
+            "Modules", "EnabledModules", "",
+            "Comma-separated list of the ONLY modules endless waves may use, for example 'Cable' " +
+            "or 'Cable, Calculator'. Every other module the game picks for a wave is replaced " +
+            "with one from this list. Leave EMPTY for the game's normal module pool (the default). " +
+            "Each name is checked against the module registry at startup; unknown names are " +
+            "reported and ignored, so a typo cannot break a wave. Module names look like " +
+            "'Cable', 'Calculator', 'Direction'.");
 
         // Two patches, both installed by reflection so nothing here needs the game's interop
         // assemblies at compile time. Harmony is also kept for our own [HarmonyPatch] types.
@@ -132,11 +127,11 @@ public class Plugin : BasePlugin
 
             try
             {
-                CableOnly.Install(harmony);
+                ModuleWhitelist.Install(harmony);
             }
             catch (System.Exception e)
             {
-                Log.LogError($"Failed to install cable-only filter: {e}");
+                Log.LogError($"Failed to install the module whitelist: {e}");
             }
         }
 

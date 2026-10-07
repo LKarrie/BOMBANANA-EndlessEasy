@@ -1,8 +1,8 @@
 {
     "name": "EndlessEasy",
-    "version_number": "1.5.0",
+    "version_number": "1.6.0",
     "website_url": "https://github.com/LKarrie/BOMBANANA-EndlessEasy",
-    "description": "Makes BOMBANANA! endless mode more forgiving: bomb timer multiplier, extra tolerated mistakes, no Morse module, or one module type per wave.",
+    "description": "Makes BOMBANANA! endless mode more forgiving: bomb timer multiplier, extra tolerated mistakes, and an optional whitelist of allowed modules.",
     "dependencies": [
         "Bombanana_Modding-BepInExPack_BOMBANANA-6.0.755",
         "JekaJeka0-BOMBANANA_Library-1.0.0"

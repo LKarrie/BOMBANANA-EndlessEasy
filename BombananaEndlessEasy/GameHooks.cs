@@ -110,7 +110,7 @@ internal static class GameHooks
         try { ModuleFilter.Poll(); }
         catch (Exception e) { Plugin.Log.LogError($"ModuleFilter poll failed: {e}"); }
 
-        try { CableOnly.Poll(); }
-        catch (Exception e) { Plugin.Log.LogError($"CableOnly poll failed: {e}"); }
+        try { ModuleWhitelist.Poll(); }
+        catch (Exception e) { Plugin.Log.LogError($"ModuleWhitelist poll failed: {e}"); }
     }
 }

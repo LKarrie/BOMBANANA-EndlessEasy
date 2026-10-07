@@ -38,8 +38,7 @@ HealthBonus = 2
 
 [Modules]
 DisableMorse = false
-ForceCableOnly = false
-CableModuleName =
+EnabledModules =
 
 [Debug]
 VerboseLogging = true
@@ -54,8 +53,8 @@ VerboseLogging = true
   difficulty a wave rolls.
 * **HealthBonus** — extra mistakes tolerated per wave. `0` disables this lever.
 * **DisableMorse** — keep the Morse code module out of the puzzle pool. See below.
-* **ForceCableOnly** — make endless waves use only the wire/cable module. See below.
-* **CableModuleName** — module name used by `ForceCableOnly`. Empty means auto-detect.
+* **EnabledModules** — the ONLY modules endless waves may use. Empty (the default) means the
+  game's normal module pool. See below.
 * **VerboseLogging** — logs the vanilla baseline, every value written, and the lobby start gates.
 
 ## Only the host needs this mod
@@ -94,12 +93,21 @@ bool TryBuildPuzzleCandidates(Difficulty, HashSet<string> usedModuleNames,
 This applies wherever the game offers the module, not only in endless mode. Default is `false`, so
 nothing changes unless you ask for it.
 
-## Making every wave the same module
+## Choosing which modules endless waves may use
 
 ```ini
 [Modules]
-ForceCableOnly = true
+EnabledModules = Cable
 ```
+
+Comma-separate to allow more than one:
+
+```ini
+EnabledModules = Cable, Calculator, Direction
+```
+
+Leave it **empty** for the game's normal pool — that is the default, so nothing changes unless you
+opt in.
 
 BOMBANANA has no "allowed modules" setting anywhere — `EndlessModeConfig`'s complete member list is
 only the timer, strikes, cover animation, the three time bonuses, the wave tiers and two
@@ -113,26 +121,26 @@ bool TryPickAllowedPuzzleModule(HashSet<string> used, Random, bool avoidRecent,
                                out string moduleName)
 ```
 
-`out string` is a plain managed `System.String`, so a Harmony postfix hands back the cable module's
-name instead. `AvoidRepeatNormalModule` / `AvoidRepeatChaosModule` are cleared at the same time,
-because a wave made of one module type needs the same name more than once.
+`out string` is a plain managed `System.String`, so a Harmony postfix hands back a different name,
+drawn at random from your list. `AvoidRepeatNormalModule` / `AvoidRepeatChaosModule` are cleared at
+the same time, because a wave built from a short list needs the same name more than once.
 
-If the cable module's name cannot be resolved from the registry, **nothing is rewritten** and the
-log says so — a wrong guess would otherwise turn every module into a name the game cannot spawn.
-Pin it yourself with `CableModuleName` if auto-detection fails; the log lists every registry name.
+A **whitelist** rather than a blacklist is deliberate: replacing a pick requires a pool of names to
+replace it *with*, and the whitelist is exactly that pool.
 
-Verified in a live three-player run. The module registry's own lookup, not a guess, confirms the
-name:
+Every name you write is checked against the module registry's own lookup (`ModuleRegistry.Get`,
+plus `IsChaosModule`) before anything is rewritten. Unknown names are reported and dropped; if
+nothing survives validation, **no rewriting happens at all**. A typo therefore cannot turn a wave
+into modules the game cannot spawn. Module names look like `Cable`, `Calculator`, `Direction`.
+
+Verified in a live three-player run, with the registry doing the confirming rather than a guess:
 
 ```
-CableOnly: cable module verified via auto-detection as 'Cable'.
-CableOnly: module picker invoked (call #1), game chose 'Direction'.
-CableOnly: 'Direction' -> 'Cable' (replacement #1..5).
+ModuleWhitelist: module picker invoked (call #1), game chose 'Direction'.
+ModuleWhitelist: 'Direction' -> 'Cable' (replacement #1..5).
 ```
 
-Five picks, five replacements: a five-module wave came out all-wires. Note the game kept rolling
-`Direction` because the avoid-repeat guards are cleared for this feature; the postfix overrides
-every pick, so the mix does not matter.
+Five picks, five replacements: a five-module wave came out all-wires.
 
 ## Installation
 
@@ -145,8 +153,13 @@ Install with r2modman / Thunderstore Mod Manager. Dependencies come along automa
 
 `EndlessModeConfig` is a `ScriptableObject` singleton holding the endless tuning: the starting
 timer, per-difficulty time bonuses, tolerated strikes per wave, and per-wave difficulty tiers.
-The mod resolves it through BOMBANANA Library's reflection API and rewrites those fields. There
-is **no Harmony patch on game logic**, so no hard-coded game method signature to break.
+The mod resolves it through BOMBANANA Library's reflection API and rewrites those fields.
+
+The two difficulty levers therefore patch nothing at all. The module features do patch game logic —
+a Harmony postfix on `EndlessMissionData`'s two module pickers, and a prefix on
+`ModuleRegistry`'s selectors for `DisableMorse` — but both targets are found **by name through
+reflection at startup**, so the mod still compiles against no game assembly. Each patch is
+installed in a try/catch and reports failure to the log rather than silently doing nothing.
 
 Two things worth knowing, both established by decompiling the game:
 
@@ -171,8 +184,11 @@ Two things worth knowing, both established by decompiling the game:
 
 ## Changelog
 
-* **1.5.0** — Verified `ForceCableOnly` in a live three-player run: a five-module wave came out
-  all-wires. Cable-name resolution now validates each candidate through `ModuleRegistry.Get(string)`
+* **1.6.0** — Replaced `ForceCableOnly` / `CableModuleName` with a general `[Modules] EnabledModules`
+  whitelist, empty by default. Every name is validated against `ModuleRegistry.Get` before use, and
+  invalid names are reported and ignored instead of being assumed correct.
+* **1.5.0** — Verified the one-module-type feature in a live three-player run: a five-module wave
+  came out all-wires. Name resolution validates each candidate through `ModuleRegistry.Get(string)`
   rather than scanning the registry, and the registry scan itself is fixed — `Registry<,>` declares
   its statics on the open generic type, which .NET reflection cannot see through a derived class.
 * **1.3.0** — Added `[Modules] ForceCableOnly` (one module type per wave) and `CableModuleName`.

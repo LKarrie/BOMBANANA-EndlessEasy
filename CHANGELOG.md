@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.0
+
+Replaced `ForceCableOnly` / `CableModuleName` with a general `[Modules] EnabledModules` whitelist of
+the module types endless waves may use. It is **empty by default**, so endless keeps the game's
+normal module pool unless you opt in.
+
+Every configured name is validated against `ModuleRegistry.Get` (and rejected if `IsChaosModule`
+says it is a chaos module) before anything is rewritten. Unknown names are reported and dropped, and
+if nothing survives validation no rewriting happens at all — so a typo cannot turn a wave into
+modules the game cannot spawn, which the previous auto-detected single name could not guarantee.
+
 ## 1.5.0
 
 Verified `ForceCableOnly` in a live three-player run: a five-module endless wave came out entirely
