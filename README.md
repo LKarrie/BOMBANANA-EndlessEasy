@@ -1,9 +1,11 @@
 # Endless Easy
 
-Makes **BOMBANANA!** endless mode more forgiving: a configurable bomb-timer multiplier and extra
-tolerated mistakes, applied to every wave.
+Makes **BOMBANANA!** endless mode more forgiving: more time per wave, more tolerated mistakes, and
+two optional ways to control which modules a wave can contain.
 
 ## What it changes
+
+### Difficulty
 
 The mod tunes the game's own `EndlessModeConfig` object. Values below are the real shipped ones,
 captured from a running game:
@@ -18,6 +20,16 @@ captured from a running game:
 
 Targets are computed from the **vanilla baseline captured on first use**, never from the current
 value, so repeated application can never compound.
+
+### Modules — both optional, off by default
+
+| Option | Effect | Default |
+| --- | --- | --- |
+| `[Modules] EnabledModules` | Whitelist: the ONLY module types endless waves may use, comma-separated. Empty means the game's normal module pool. | empty |
+| `[Modules] DisableMorse` | Drops the Morse module from the normal pool, using the game's own `allowMorse` selector flag. | `false` |
+
+Details: [choosing which modules endless waves may use](#choosing-which-modules-endless-waves-may-use)
+and [keeping the Morse module out](#keeping-the-morse-module-out).
 
 ## Configuration
 
