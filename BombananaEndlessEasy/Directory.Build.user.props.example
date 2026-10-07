@@ -1,0 +1,26 @@
+<Project>
+
+  <!--
+    Copy this file to Directory.Build.user.props (same folder, gitignored) and set the paths
+    for your machine. Only needed when the portable defaults in Directory.Build.props do not
+    match your install -- for example a non-default r2modman profile name, or a Thunderstore
+    Mod Manager install instead of r2modman.
+
+    Typical values:
+
+      r2modman:
+        %APPDATA%\r2modmanPlus-local\BOMBANANA\profiles\Default\BepInEx\plugins
+        %APPDATA%\r2modmanPlus-local\BOMBANANA\profiles\Default\BepInEx\interop
+
+      Thunderstore Mod Manager:
+        %APPDATA%\Thunderstore Mod Manager\DataFolder\BOMBANANA\profiles\Default\BepInEx\plugins
+  -->
+
+  <PropertyGroup>
+    <BombananaProfileDir></BombananaProfileDir>
+    <BombananaPluginsDir></BombananaPluginsDir>
+    <BepInExInteropDir></BepInExInteropDir>
+    <BombananaLibraryDll></BombananaLibraryDll>
+  </PropertyGroup>
+
+</Project>

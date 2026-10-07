@@ -1,0 +1,15 @@
+# Build output
+bin/
+obj/
+dist/
+*.zip
+
+# Local analysis scratch: decompiled game data and third-party library source.
+# Not ours to redistribute, so keep it out of the repository.
+_analysis/
+
+# IDE / user-specific
+.vs/
+.idea/
+*.user
+Directory.Build.user.props

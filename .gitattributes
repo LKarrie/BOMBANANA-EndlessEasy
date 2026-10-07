@@ -1,0 +1,8 @@
+# Keep line endings stable no matter who clones this on which OS.
+* text=auto eol=lf
+
+# Binary assets must never be normalised.
+*.png binary
+*.dll binary
+*.zip binary
+*.7z binary
